@@ -4,11 +4,11 @@ tweets_max_users: 100
 tweets_per_user: 100
 
 clustering:
-  algorithm: lda
-  n_topics: 30
+  algorithm: lda #not used
+  n_topics: 50
   max_iterations: 500
-  max_users: 100
-  alpha: default
+  max_users: -1
+  alpha: default #not used
   gamma: 0.02
 
 twitter:

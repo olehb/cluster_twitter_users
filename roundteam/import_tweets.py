@@ -38,4 +38,4 @@ if __name__ == '__main__':
     with open(config.user_ids_file) as f:
         user_ids = [user_id.strip() for user_id in f]
 
-    fetch_tweets(user_ids, twitter_client, '.', 10, 2)
+    fetch_tweets(user_ids, twitter_client, config.tweets_folder, config.tweets_per_user, config.tweets_max_users)
