@@ -1,0 +1,18 @@
+tweets_folder: ../data/tweets
+user_ids_file: ../data/user_ids.csv
+tweets_max_users: 100
+tweets_per_user: 100
+
+clustering:
+  algorithm: lda
+  n_topics: 30
+  max_iterations: 500
+  max_users: 100
+  alpha: default
+  gamma: 0.02
+
+twitter:
+  consumer_key: 'abc'
+  consumer_secret: 'abc'
+  access_token: '123-xyz'
+  access_token_secret: 'xyz'
