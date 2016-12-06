@@ -2,7 +2,7 @@ import json
 import os
 import re
 import string
-import roundteam.config
+from roundteam.config import load_yaml
 import sys
 from stop_words import get_stop_words
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
@@ -88,7 +88,7 @@ def cluster_users(data_folder, max_users=-1):
 
 
 if __name__ == '__main__':
-    config = config.load_yaml('../../config.yml')
+    config = load_yaml('../config.yml')
     max_users = config.clustering.max_users
     data_folder = config.tweets_folder
     if not os.path.isdir(data_folder):
