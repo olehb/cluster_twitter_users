@@ -1,5 +1,5 @@
 tweets_folder: ../data/tweets
-user_ids_file: data/user_ids.csv
+user_ids_file: ../data/user_ids.csv
 tweets_max_users: 100
 tweets_per_user: 100
 
