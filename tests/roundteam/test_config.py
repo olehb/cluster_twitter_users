@@ -16,9 +16,11 @@ class ConfigTestCase(unittest.TestCase):
         self.assertEqual(config.a, '111')
         self.assertEqual(config.b, [1, 2, 3])
         self.assertIsInstance(config.c, Config)
-        self.assertIsInstance(config.c.a, 123)
-        self.assertRaises(config.something_else, ValueError)
-        self.assertRaises(config.c.something_else, ValueError)
+        self.assertEqual(config.c.a, 123)
+        with self.assertRaises(ValueError):
+            config.something_else
+        with self.assertRaises(ValueError):
+            config.c.something_else
 
 
 if __name__ == '__main__':
