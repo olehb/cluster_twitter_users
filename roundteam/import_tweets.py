@@ -1,6 +1,9 @@
 import tweepy
 import json
 import time
+import os
+import yaml
+import ..config
 
 
 def create_twitter_client(app_key, app_secret, access_token, access_token_secret):
@@ -27,4 +30,16 @@ def fetch_tweets(user_ids, twitter_client, dest_folder, tweets_per_user=100, max
 
         if float(n_failures)/i > acceptable_failure_ratio:
             raise ValueError('too many failures: %d out of %d' % (n_failures, i))
+
+
+if __name__ == '__main__':
+    config =
+    stream = open(os.path.abspath('config.yml'), 'r')
+    config = yaml.load(stream)
+    max_users = config['clustering']['max_users']
+    data_folder = config['tweets_folder']
+    if not os.path.isdir(data_folder):
+        print('Data folder not found: %s' % data_folder)
+        sys.exit(1)
+    cluster_users(data_folder, max_users)
 

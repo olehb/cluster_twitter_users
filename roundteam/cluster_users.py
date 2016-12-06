@@ -1,7 +1,7 @@
 import json
 import os
 import re
-import yaml
+import config
 import sys
 from stop_words import get_stop_words
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
@@ -60,10 +60,9 @@ def cluster_users(data_folder, max_users=-1):
 
 
 if __name__ == '__main__':
-    stream = open(os.path.abspath('config.yml'), 'r')
-    config = yaml.load(stream)
-    max_users = config['clustering']['max_users']
-    data_folder = config['tweets_folder']
+    config = config.load_yaml('../../config.yml')
+    max_users = config.clustering.max_users
+    data_folder = config.tweets_folder
     if not os.path.isdir(data_folder):
         print('Data folder not found: %s' % data_folder)
         sys.exit(1)
