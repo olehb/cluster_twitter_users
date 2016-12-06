@@ -20,7 +20,7 @@ def get_text_cleaner(lang):
     # Sorting stop_words to remove long words first.
     # Otherwise in phrase I'm "I" can be removed first, leaving 'm behind
     stop_words = get_stop_words(lang)
-    stop_words.append('rt')
+    stop_words.extend(['rt', 'via', 'http', 'https', 'htt', 'ht']) # Sometimes twitter cut URL in the middle of URL
     stop_words = sorted(stop_words, reverse=True)
 
     translator = str.maketrans({key: None for key in string.punctuation})
@@ -32,14 +32,15 @@ def get_text_cleaner(lang):
         nonlocal translator
 
         text = text.lower()
-        # Removing English stop-words
-        for stop_word in stop_words:
-            pattern = r'\b' + stop_word.lower() + r'\b'
-            text = re.sub(pattern, ' ', text, flags=re.MULTILINE)
 
         # Removing URLs
         # TODO: Pre-compile regexp in upper scope
-        text = re.sub(r"https?:\/\/.*?(?:\r|\n|\s|$)", ' ', text, flags=re.IGNORECASE)
+        text = re.sub(r"https?:\/\/.*?(?:\r|\n|\s|$)", ' ', text, flags=re.MULTILINE)
+
+        # Removing stop-words
+        for stop_word in stop_words:
+            pattern = r'\b' + stop_word.lower() + r'\b'
+            text = re.sub(pattern, ' ', text, flags=re.MULTILINE)
 
         # Removing punctuation
         text = text.translate(translator)

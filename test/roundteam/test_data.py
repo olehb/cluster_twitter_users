@@ -41,6 +41,12 @@ class TestData(unittest.TestCase):
         text = (u"\u2026" + " ")*10 + 'ellipsis was removed'
         self.assertEqual('ellipsis removed', clean_up_text(text))
 
+        text = "https:…"
+        self.assertEqual('', clean_up_text(text))
+
+        text = "https:/…"
+        self.assertEqual('', clean_up_text(text))
+
         stop_words = get_stop_words("en")
         for i in range(10):
             shuffle(stop_words)
