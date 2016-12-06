@@ -1,8 +1,6 @@
 import tweepy
 import json
 import time
-import os
-import yaml
 from roundteam.config import load_yaml
 
 
@@ -13,6 +11,7 @@ def create_twitter_client(app_key, app_secret, access_token, access_token_secret
 
 
 def fetch_tweets(user_ids, twitter_client, dest_folder, tweets_per_user=100, max_users=-1, acceptable_failure_ratio=0.1):
+    # TODO: Unit-test this
     n_failures = 0
     for i, user_id in enumerate(user_ids):
         if max_users > 0 and i > max_users-1:

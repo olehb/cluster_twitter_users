@@ -9,12 +9,11 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.decomposition import LatentDirichletAllocation
 
 
-def print_top_words(model, feature_names, n_top_words):
-    for topic_idx, topic in enumerate(model.components_):
-        print("Topic #%d:" % topic_idx)
-        print(" ".join([feature_names[i]
-                        for i in topic.argsort()[:-n_top_words - 1:-1]]))
-    print()
+def cluster_users(data, clustering_algorithm, data_preprocessor):
+    print('preprocessing data...')
+    features = data_preprocessor.fit_transform(data)
+    print('clustering...')
+    clustering_algorithm.fit(features)
 
 
 def get_text_cleaner(lang):
@@ -52,7 +51,7 @@ def get_text_cleaner(lang):
     return clean_up_text
 
 
-def cluster_users(data_folder, max_users=-1):
+def get_data(data_folder, max_users=-1):
     user_ids = []
     bags_of_words = []
     n_users = 0
@@ -73,18 +72,15 @@ def cluster_users(data_folder, max_users=-1):
             full_text = clean_up_text(' '.join(tweet_texts))
             bags_of_words.append(full_text)
         n_users += 1
+    return bags_of_words
 
-    print('loaded data for %d users' % n_users)
-    print('calculating features...')
-    cv = CountVectorizer(strip_accents='unicode')
-    features = cv.fit_transform(bags_of_words)
-    #tfidf = TfidfTransformer()
-    #features = tfidf.fit_transform(features)
 
-    print('calculating lda...')
-    lda = LatentDirichletAllocation(n_topics=30, verbose=1, learning_method='batch', topic_word_prior=0.02, max_iter=500)
-    lda.fit(features)
-    print_top_words(lda, cv.get_feature_names(), 10)
+def print_top_words(model, feature_names, n_top_words):
+    for topic_idx, topic in enumerate(model.components_):
+        print("Topic #%d:" % topic_idx)
+        print(" ".join([feature_names[i]
+                        for i in topic.argsort()[:-n_top_words - 1:-1]]))
+    print()
 
 
 if __name__ == '__main__':
@@ -94,5 +90,16 @@ if __name__ == '__main__':
     if not os.path.isdir(data_folder):
         print('Data folder not found: %s' % data_folder)
         sys.exit(1)
-    cluster_users(data_folder, max_users)
+
+    data = get_data(data_folder, config.clustering.max_users)
+    #tfidf = TfidfTransformer()
+    #features = tfidf.fit_transform(features)
+    cv = CountVectorizer(strip_accents='unicode')
+    lda = LatentDirichletAllocation(n_topics=config.clustering.n_topics,
+                                    verbose=1,
+                                    learning_method='batch',
+                                    topic_word_prior=config.clustering.gamma,
+                                    max_iter=config.clustering.max_iterations)
+    cluster_users(data, lda, cv)
+    print_top_words(lda, cv.get_feature_names(), 10)
 
