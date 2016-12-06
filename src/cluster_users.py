@@ -1,6 +1,8 @@
 import json
 import os
 import re
+import yaml
+import sys
 from stop_words import get_stop_words
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.decomposition import LatentDirichletAllocation
@@ -25,23 +27,28 @@ def clean_up_text(text):
     return text
 
 
-if __name__ == '__main__':
+def cluster_users(data_folder, max_users=-1):
     user_ids = []
     bags_of_words = []
-    for filename in os.listdir('../data/tweets'):
+    n_users = 0
+    for filename in os.listdir(data_folder):
         if not filename.endswith('.json'):
             continue
+        if max_users > 0 and n_users > max_users-1:
+            break
+
         user_ids.append(filename[:-len('.json')])
-        with open('data/%s' % filename, 'r') as f:
+        with open(os.path.abspath('%s/%s' % (data_folder, filename)), 'r') as f:
             tweets = json.load(f)
         tweet_texts = [tweet['full_text'] if 'full_text' in tweet else tweet['text'] for tweet in tweets if tweet['lang'] == 'en']
         if len(tweet_texts) > 0:
-            full_text = ' '.join(tweet_texts)
-            full_text = re.sub(r'^RT\s', ' ', full_text, flags=re.MULTILINE | re.IGNORECASE)
-            bags_of_words.append()
+            full_text = clean_up_text(' '.join(tweet_texts))
+            bags_of_words.append(full_text)
+        n_users += 1
 
+    print('loaded data for %d users' % n_users)
     print('calculating features...')
-    cv = CountVectorizer(strip_accents='unicode', stop_words='english')
+    cv = CountVectorizer(strip_accents='unicode')
     features = cv.fit_transform(bags_of_words)
     #tfidf = TfidfTransformer()
     #features = tfidf.fit_transform(features)
@@ -52,4 +59,13 @@ if __name__ == '__main__':
     print_top_words(lda, cv.get_feature_names(), 10)
 
 
+if __name__ == '__main__':
+    stream = open(os.path.abspath('config.yml'), 'r')
+    config = yaml.load(stream)
+    max_users = config['clustering']['max_users']
+    data_folder = config['tweets_folder']
+    if not os.path.isdir(data_folder):
+        print('Data folder not found: %s' % data_folder)
+        sys.exit(1)
+    cluster_users(data_folder, max_users)
 

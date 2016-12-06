@@ -6,7 +6,7 @@ tweets_per_user: 100
 clustering:
   algorithm: lda
   max_iterations: 500
-  max_users: -1
+  max_users: 1
   alpha: default
   gamma: 0.02
 
