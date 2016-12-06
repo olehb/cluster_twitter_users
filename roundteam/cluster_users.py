@@ -1,7 +1,8 @@
 import json
 import os
 import re
-import config
+import string
+import roundteam.config
 import sys
 from stop_words import get_stop_words
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
@@ -16,21 +17,48 @@ def print_top_words(model, feature_names, n_top_words):
     print()
 
 
-def clean_up_text(text):
-    text = text.lower()
-    stop_words = get_stop_words('en')
+def get_text_cleaner(lang):
+    # Sorting stop_words to remove long words first.
+    # Otherwise in phrase I'm "I" can be removed first, leaving 'm behind
+    stop_words = get_stop_words(lang)
     stop_words.append('rt')
-    for stop_word in stop_words:
-        pattern = r'\b' + stop_word.lower() + r'\b'
-        text = re.sub(pattern, ' ', text, flags=re.MULTILINE)
-    text = re.sub(r'https?:\/\/.*[\r\n\s$]', ' ', text, flags=re.MULTILINE | re.IGNORECASE)
-    return text
+    stop_words = sorted(stop_words, reverse=True)
+
+    translator = str.maketrans({key: None for key in string.punctuation})
+    translator[ord(u"\u2026")] = None # Adding horizontal ellipsis as it's regularly included into Tweets
+    del translator[ord('_')]
+
+    def clean_up_text(text):
+        nonlocal stop_words
+        nonlocal translator
+
+        text = text.lower()
+        # Removing English stop-words
+        for stop_word in stop_words:
+            pattern = r'\b' + stop_word.lower() + r'\b'
+            text = re.sub(pattern, ' ', text, flags=re.MULTILINE)
+
+        # Removing URLs
+        # TODO: Pre-compile regexp in upper scope
+        text = re.sub(r"https?:\/\/.*?(?:\r|\n|\s|$)", ' ', text, flags=re.IGNORECASE)
+
+        # Removing punctuation
+        text = text.translate(translator)
+
+        # Normalizing spaces
+        text = re.sub(r"\s{2,}", ' ', text.strip())
+
+        return text
+    return clean_up_text
 
 
 def cluster_users(data_folder, max_users=-1):
     user_ids = []
     bags_of_words = []
     n_users = 0
+    # TODO: Move to config?
+    lang = 'en'
+    clean_up_text = get_text_cleaner(lang)
     for filename in os.listdir(data_folder):
         if not filename.endswith('.json'):
             continue
@@ -40,7 +68,7 @@ def cluster_users(data_folder, max_users=-1):
         user_ids.append(filename[:-len('.json')])
         with open(os.path.abspath('%s/%s' % (data_folder, filename)), 'r') as f:
             tweets = json.load(f)
-        tweet_texts = [tweet['full_text'] if 'full_text' in tweet else tweet['text'] for tweet in tweets if tweet['lang'] == 'en']
+        tweet_texts = [tweet['full_text'] if 'full_text' in tweet else tweet['text'] for tweet in tweets if tweet['lang'] == lang]
         if len(tweet_texts) > 0:
             full_text = clean_up_text(' '.join(tweet_texts))
             bags_of_words.append(full_text)
