@@ -2,6 +2,8 @@ import json
 import os
 import re
 import string
+from nltk.stem.porter import PorterStemmer
+from nltk.stem import WordNetLemmatizer
 from roundteam.config import load_yaml
 import sys
 from stop_words import get_stop_words
@@ -27,9 +29,15 @@ def get_text_cleaner(lang):
     translator[ord(u"\u2026")] = None # Adding horizontal ellipsis as it's regularly included into Tweets
     del translator[ord('_')]
 
+    stemmer = PorterStemmer()
+    lemmatizer = WordNetLemmatizer()
+    # import nltk
+    # nltk.download()
+
     def clean_up_text(text):
         nonlocal stop_words
         nonlocal translator
+        nonlocal stemmer
 
         text = text.lower()
 
@@ -45,8 +53,11 @@ def get_text_cleaner(lang):
         # Removing punctuation
         text = text.translate(translator)
 
-        # Normalizing spaces
-        text = re.sub(r"\s{2,}", ' ', text.strip())
+        # # Normalizing spaces
+        # text = re.sub(r"\s{2,}", ' ', text.strip())
+
+        # text = ' '.join(map(stemmer.stem, text.split(' ')))
+        text = ' '.join(map(lemmatizer.lemmatize, text.split(' ')))
 
         return text
     return clean_up_text
