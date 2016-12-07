@@ -9,6 +9,8 @@ import sys
 from stop_words import get_stop_words
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.decomposition import LatentDirichletAllocation
+from sklearn.pipeline import Pipeline
+from sklearn.cluster import KMeans
 
 
 def cluster_users(data, clustering_algorithm, data_preprocessor):
@@ -53,8 +55,8 @@ def get_text_cleaner(lang):
         # Removing punctuation
         text = text.translate(translator)
 
-        # # Normalizing spaces
-        # text = re.sub(r"\s{2,}", ' ', text.strip())
+        # Normalizing spaces
+        text = re.sub(r"\s+", ' ', text.strip())
 
         # text = ' '.join(map(stemmer.stem, text.split(' ')))
         text = ' '.join(map(lemmatizer.lemmatize, text.split(' ')))
@@ -104,14 +106,19 @@ if __name__ == '__main__':
         sys.exit(1)
 
     data = get_data(data_folder, config.clustering.max_users)
-    #tfidf = TfidfTransformer()
-    #features = tfidf.fit_transform(features)
+    tfidf = TfidfTransformer()
     cv = CountVectorizer(strip_accents='unicode')
     lda = LatentDirichletAllocation(n_topics=config.clustering.n_topics,
                                     verbose=1,
                                     learning_method='batch',
                                     topic_word_prior=config.clustering.gamma,
                                     max_iter=config.clustering.max_iterations)
-    cluster_users(data, lda, cv)
-    print_top_words(lda, cv.get_feature_names(), 10)
+    pipeline = Pipeline([
+        ('vect', cv),
+        ('tfidf', tfidf),
+        ('clst', lda),
+    ])
+    pipeline.fit_transform(data)
+    # cluster_users(data, lda, cv)
+    print_top_words(lda, cv.get_feature_names(), 20)
 
