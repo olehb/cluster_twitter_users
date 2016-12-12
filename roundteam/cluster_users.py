@@ -37,14 +37,9 @@ def get_text_cleaner(lang):
     # nltk.download()
 
     def clean_up_text(text):
-        nonlocal stop_words
-        nonlocal translator
-        nonlocal stemmer
-
         text = text.lower()
 
         # Removing URLs
-        # TODO: Pre-compile regexp in upper scope
         text = re.sub(r"https?:\/\/.*?(?:\r|\n|\s|$)", ' ', text, flags=re.MULTILINE)
 
         # Removing stop-words
@@ -98,7 +93,8 @@ def print_top_words(model, feature_names, n_top_words):
 
 
 if __name__ == '__main__':
-    config = load_yaml('../config.yml')
+    dir = os.path.dirname(__file__)
+    config = load_yaml(os.path.join(dir, '../config.yml'))
     max_users = config.clustering.max_users
     data_folder = config.tweets_folder
     if not os.path.isdir(data_folder):
