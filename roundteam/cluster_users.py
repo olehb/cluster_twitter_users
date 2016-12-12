@@ -2,11 +2,15 @@ import json
 import os
 import re
 import string
+from nltk.stem.porter import PorterStemmer
+from nltk.stem import WordNetLemmatizer
 from roundteam.config import load_yaml
 import sys
 from stop_words import get_stop_words
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.decomposition import LatentDirichletAllocation
+from sklearn.pipeline import Pipeline
+from sklearn.cluster import KMeans
 
 
 def cluster_users(data, clustering_algorithm, data_preprocessor):
@@ -27,14 +31,15 @@ def get_text_cleaner(lang):
     translator[ord(u"\u2026")] = None # Adding horizontal ellipsis as it's regularly included into Tweets
     del translator[ord('_')]
 
-    def clean_up_text(text):
-        nonlocal stop_words
-        nonlocal translator
+    stemmer = PorterStemmer()
+    lemmatizer = WordNetLemmatizer()
+    # import nltk
+    # nltk.download()
 
+    def clean_up_text(text):
         text = text.lower()
 
         # Removing URLs
-        # TODO: Pre-compile regexp in upper scope
         text = re.sub(r"https?:\/\/.*?(?:\r|\n|\s|$)", ' ', text, flags=re.MULTILINE)
 
         # Removing stop-words
@@ -46,7 +51,10 @@ def get_text_cleaner(lang):
         text = text.translate(translator)
 
         # Normalizing spaces
-        text = re.sub(r"\s{2,}", ' ', text.strip())
+        text = re.sub(r"\s+", ' ', text.strip())
+
+        # text = ' '.join(map(stemmer.stem, text.split(' ')))
+        text = ' '.join(map(lemmatizer.lemmatize, text.split(' ')))
 
         return text
     return clean_up_text
@@ -85,7 +93,8 @@ def print_top_words(model, feature_names, n_top_words):
 
 
 if __name__ == '__main__':
-    config = load_yaml('../config.yml')
+    dir = os.path.dirname(__file__)
+    config = load_yaml(os.path.join(dir, '../config.yml'))
     max_users = config.clustering.max_users
     data_folder = config.tweets_folder
     if not os.path.isdir(data_folder):
@@ -93,14 +102,19 @@ if __name__ == '__main__':
         sys.exit(1)
 
     data = get_data(data_folder, config.clustering.max_users)
-    #tfidf = TfidfTransformer()
-    #features = tfidf.fit_transform(features)
+    tfidf = TfidfTransformer()
     cv = CountVectorizer(strip_accents='unicode')
     lda = LatentDirichletAllocation(n_topics=config.clustering.n_topics,
                                     verbose=1,
                                     learning_method='batch',
                                     topic_word_prior=config.clustering.gamma,
                                     max_iter=config.clustering.max_iterations)
-    cluster_users(data, lda, cv)
-    print_top_words(lda, cv.get_feature_names(), 10)
+    pipeline = Pipeline([
+        ('vect', cv),
+        ('tfidf', tfidf),
+        ('clst', lda),
+    ])
+    pipeline.fit_transform(data)
+    # cluster_users(data, lda, cv)
+    print_top_words(lda, cv.get_feature_names(), 20)
 

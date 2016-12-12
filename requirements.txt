@@ -22,6 +22,7 @@ nb-conda-kernels==2.0.0
 nbconvert==4.2.0
 nbformat==4.2.0
 nbpresent==3.0.2
+nltk==3.2.1
 notebook==4.2.3
 numpy==1.11.2
 oauthlib==2.0.1
